@@ -1,11 +1,11 @@
 package redux.observable
 
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.PublishSubject
 import redux.api.Dispatcher
 import redux.api.Store
 import redux.api.enhancer.Middleware
-import rx.schedulers.Schedulers
-import rx.subjects.BehaviorSubject
-import rx.subjects.PublishSubject
 import java.util.concurrent.atomic.AtomicBoolean
 
 /*
@@ -31,12 +31,12 @@ interface EpicMiddleware<S : Any> : Middleware<S> {
 fun <S : Any> createEpicMiddleware(epic: Epic<S>): EpicMiddleware<S> {
     return object : EpicMiddleware<S> {
         private val actions = PublishSubject.create<Any>()
-        private val epics = BehaviorSubject.create(epic)
+        private val epics = BehaviorSubject.createDefault(epic)
         private val subscribed = AtomicBoolean(false)
 
         override fun dispatch(store: Store<S>, next: Dispatcher, action: Any): Any {
             if (subscribed.compareAndSet(false, true)) {
-                epics.switchMap { it.map(actions.subscribeOn(Schedulers.immediate()), store) }
+                epics.switchMap { it.map(actions.subscribeOn(Schedulers.trampoline()), store) }
                     .subscribe { store.dispatch(it) }
             }
             val result = next.dispatch(action)

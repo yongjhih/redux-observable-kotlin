@@ -1,7 +1,7 @@
 package redux.observable
 
+import io.reactivex.Observable
 import redux.api.Store
-import rx.Observable
 
 /*
  * Copyright (C) 2016 Michael Pardo

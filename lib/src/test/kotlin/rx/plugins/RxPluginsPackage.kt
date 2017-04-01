@@ -1,5 +1,8 @@
 package rx.plugins
 
+import io.reactivex.plugins.RxJavaPlugins
+import io.reactivex.schedulers.Schedulers
+
 /*
  * Copyright (C) 2016 Michael Pardo
  *
@@ -19,14 +22,16 @@ package rx.plugins
 object RxPluginsPackage {
 
     fun setUp() {
-        RxJavaPlugins.getInstance().reset()
-        RxJavaPlugins.getInstance().registerErrorHandler(RxJavaPlugins.DEFAULT_ERROR_HANDLER)
-        RxJavaPlugins.getInstance().registerSchedulersHook(SynchronousSchedulersHook())
-        RxJavaPlugins.getInstance().registerObservableExecutionHook(RxJavaObservableExecutionHookDefault.getInstance())
+        RxJavaPlugins.reset()
+        RxJavaPlugins.setErrorHandler {}
+        RxJavaPlugins.setComputationSchedulerHandler { null }
+        RxJavaPlugins.setIoSchedulerHandler { Schedulers.trampoline() }
+        RxJavaPlugins.setNewThreadSchedulerHandler { Schedulers.trampoline() }
+        RxJavaPlugins.setOnObservableSubscribe { observable, observer -> observer }
     }
 
     fun reset() {
-        RxJavaPlugins.getInstance().reset()
+        RxJavaPlugins.reset()
     }
 
 }

@@ -1,5 +1,7 @@
 package redux.observable
 
+import io.reactivex.Observable
+import io.reactivex.schedulers.TestScheduler
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
@@ -22,10 +24,7 @@ import redux.observable.helpers.ActionCreators.Action.Fire2
 import redux.observable.helpers.ActionCreators.Action.Fire3
 import redux.observable.helpers.ActionCreators.Action.Fire4
 import redux.observable.helpers.ActionCreators.Action.FireGeneric
-import rx.Observable
-import rx.observers.TestSubscriber
 import rx.plugins.RxPluginsPackage
-import rx.schedulers.TestScheduler
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.test.expect
 
@@ -131,7 +130,6 @@ class EpicMiddlewareTest : Spek({
 
             it("should dispatch actions mapped to other threads") {
                 val scheduler = TestScheduler()
-                val subscriber = TestSubscriber<List<Any>>()
 
                 val reducer = Reducer { state: List<Any>, action: Any -> state + action }
 
@@ -151,14 +149,14 @@ class EpicMiddlewareTest : Spek({
                 }
 
                 val store = createStore(reducer, emptyList(), applyMiddleware(createEpicMiddleware(epic)))
-                store.asObservable().subscribe(subscriber)
+                val testObserver = store.asObservable().test()
 
                 store.dispatch(Fire1)
                 store.dispatch(Fire2)
 
                 scheduler.advanceTimeBy(500L, MILLISECONDS)
 
-                subscriber.assertValues(
+                testObserver.assertValues(
                     listOf(
                         INIT,
                         Fire1

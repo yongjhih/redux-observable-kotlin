@@ -1,5 +1,8 @@
 package rx.plugins
 
+import io.reactivex.internal.observers.LambdaObserver
+import io.reactivex.plugins.RxJavaPlugins
+import io.reactivex.schedulers.Schedulers
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -25,14 +28,17 @@ class RxJavaPluginsResetRule : TestRule {
     override fun apply(base: Statement?, description: Description?): Statement? {
         return object : Statement() {
             override fun evaluate() {
-                RxJavaPlugins.getInstance().reset()
-                RxJavaPlugins.getInstance().registerErrorHandler(RxJavaPlugins.DEFAULT_ERROR_HANDLER)
-                RxJavaPlugins.getInstance().registerSchedulersHook(SynchronousSchedulersHook())
-                RxJavaPlugins.getInstance().registerObservableExecutionHook(RxJavaObservableExecutionHookDefault.getInstance())
+                RxJavaPlugins.reset()
+                RxJavaPlugins.setErrorHandler {}
+                RxJavaPlugins.setComputationSchedulerHandler { null }
+                RxJavaPlugins.setIoSchedulerHandler { Schedulers.trampoline() }
+                RxJavaPlugins.setNewThreadSchedulerHandler { Schedulers.trampoline() }
+                //RxJavaPlugins.setOnObservableSubscribe { observable, observer -> LambdaObserver({it}, {it}, {}, {it}) }
+                RxJavaPlugins.setOnObservableSubscribe { observable, observer -> observer }
 
                 base?.evaluate()
 
-                RxJavaPlugins.getInstance().reset()
+                RxJavaPlugins.reset()
             }
         }
     }
