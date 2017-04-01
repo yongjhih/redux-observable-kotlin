@@ -1,8 +1,8 @@
 package redux.observable
 
+import com.jakewharton.rxrelay2.BehaviorRelay
+import com.jakewharton.rxrelay2.PublishRelay
 import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.PublishSubject
 import redux.api.Dispatcher
 import redux.api.Store
 import redux.api.enhancer.Middleware
@@ -30,8 +30,8 @@ interface EpicMiddleware<S : Any> : Middleware<S> {
 
 fun <S : Any> createEpicMiddleware(epic: Epic<S>): EpicMiddleware<S> {
     return object : EpicMiddleware<S> {
-        private val actions = PublishSubject.create<Any>()
-        private val epics = BehaviorSubject.createDefault(epic)
+        private val actions = PublishRelay.create<Any>()
+        private val epics = BehaviorRelay.createDefault(epic)
         private val subscribed = AtomicBoolean(false)
 
         override fun dispatch(store: Store<S>, next: Dispatcher, action: Any): Any {
@@ -40,12 +40,12 @@ fun <S : Any> createEpicMiddleware(epic: Epic<S>): EpicMiddleware<S> {
                     .subscribe { store.dispatch(it) }
             }
             val result = next.dispatch(action)
-            actions.onNext(action)
+            actions.accept(action)
             return result
         }
 
         override fun replaceEpic(epic: Epic<S>) {
-            epics.onNext(epic)
+            epics.accept(epic)
         }
     }
 }
